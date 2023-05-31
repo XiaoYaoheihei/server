@@ -5,13 +5,14 @@
 #include "Socket.h"
 
 int socketopts::creatSocket() {
-  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  int fd =::socket(AF_INET, SOCK_STREAM, 0);
   //检查返回值
   if (fd == -1) {
     perror("socket");
     exit(0);
   }
-  printf("success to creat fd");
+  //添加日志信息
+  printf("success to creat fd\n");
   return fd;
 }
 
@@ -29,11 +30,13 @@ void socketopts::bindOrdie(int lfd, struct sockaddr_in* addr) {
   if (ret) {
 
   }
-  ret = ::bind(lfd, (struct sockaddr*)addr, sizeof(addr));
+  ret = ::bind(lfd, (struct sockaddr*)addr, sizeof(*addr));
   if (ret == -1) {
     perror("bind");
     exit(0);
   }
+  //添加日志信息
+  printf("success to bind\n");
 }
 
 void socketopts::setListen(int lfd) {
@@ -42,6 +45,8 @@ void socketopts::setListen(int lfd) {
     perror("listrn");
     exit(0);
   }
+  //添加日志信息
+  printf("success to listen\n");
 }
 
 int socketopts::acceptConn(int lfd, struct sockaddr_in *listenAddr, socklen_t* size) {
@@ -50,6 +55,8 @@ int socketopts::acceptConn(int lfd, struct sockaddr_in *listenAddr, socklen_t* s
     perror("accept");
     exit(0);
   }
+  //添加日志信息
+  printf("success to accept\n");
   return cfd;
 }
 
