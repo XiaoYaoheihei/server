@@ -1,17 +1,25 @@
 #ifndef NET_EVENTLOOP_H
 #define NET_EVENTLOOP_H
 
+#include <vector>
+
+class Channel;
+class Poller;
 class EventLoop{
   public:
     EventLoop();
     ~EventLoop();
 
     void loop();
-
+    void quit();
   private:
-    
+    //活跃的事件表
+    typedef std::vector<Channel*> ChannelList;
+    ChannelList activeChannels;
+
     bool looping;
-    bool quit;
+    bool quit_;
+    Poller& poller_;
 
 };
 
