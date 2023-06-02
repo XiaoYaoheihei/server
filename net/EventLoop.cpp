@@ -4,7 +4,7 @@
 #include "../net/Channel.h"
 
 EventLoop::EventLoop()
-  : poller_(*(new Poller(this))),
+  : poller_(std::make_unique<Poller>(this)),
     quit_(false) {
 
 }
@@ -21,7 +21,9 @@ void EventLoop::loop() {
   std::cout << "EventLoop start to loop" << std::endl;
 
   while (!quit_) {
-    poller_.poll(&activeChannels);
+    activeChannels.clear();
+
+    poller_->poll(&activeChannels);
 
     for (auto event : activeChannels) {
       //日志信息
@@ -36,3 +38,7 @@ void EventLoop::loop() {
 void EventLoop::quit() {
   quit_ = true;
 }
+
+void EventLoop::updateChannel(Channel* channel) {
+  poller_->updateChannel(channel);
+} 
