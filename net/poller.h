@@ -2,6 +2,7 @@
 #define NET_POLLER_H
 
 #include <vector>
+#include <map>
 
 class EventLoop;
 class Channel;
@@ -10,7 +11,7 @@ class Poller {
     typedef std::vector<Channel*> ChannelList;
 
     Poller(EventLoop* loop);
-    ~Poller();
+    ~Poller()=default;
 
     //仅供EventLoop调用
     void poll(ChannelList* activeChannels);
@@ -22,7 +23,7 @@ class Poller {
 
     EventLoop* owner;
     std::vector<struct pollfd> PollFdList;
-
+    std::map<int, Channel*> ChannelMap;
     
 };
 
