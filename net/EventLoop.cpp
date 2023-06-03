@@ -3,6 +3,8 @@
 #include "../net/poller.h"
 #include "../net/Channel.h"
 
+const int PollTimeMs = 10000;
+
 EventLoop::EventLoop()
   : poller_(std::make_unique<Poller>(this)),
     quit_(false) {
@@ -23,12 +25,12 @@ void EventLoop::loop() {
   while (!quit_) {
     activeChannels.clear();
 
-    poller_->poll(&activeChannels);
+    poller_->poll(&activeChannels, PollTimeMs);
 
-    for (auto event : activeChannels) {
+    for (auto channel : activeChannels) {
       //日志信息
-
-      event->handleEvent();
+      std::cout << "start to callback" << std::endl;
+      channel->handleEvent();
     }
   }
 

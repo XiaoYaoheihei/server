@@ -6,8 +6,7 @@
 
 class Channel;
 class Poller;
-//活跃的事件表
-typedef std::vector<Channel*> ChannelList;
+
 class EventLoop{
   public:
     EventLoop();
@@ -17,7 +16,8 @@ class EventLoop{
     void quit();
     void updateChannel(Channel* channel);
   private:
-
+    //活跃的事件表
+    typedef std::vector<Channel*> ChannelList;
     ChannelList activeChannels;
 
     bool looping;
