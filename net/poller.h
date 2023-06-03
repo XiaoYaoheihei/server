@@ -6,15 +6,15 @@
 
 class EventLoop;
 class Channel;
+typedef std::vector<Channel*> ChannelList;
 class Poller {
   public:
-    typedef std::vector<Channel*> ChannelList;
-
+    
     Poller(EventLoop* loop);
-    ~Poller()=default;
+    ~Poller();
 
     //仅供EventLoop调用
-    void poll(ChannelList* activeChannels);
+    void poll(ChannelList* activeChannels, int times);
     void updateChannel(Channel* chan);
 
   private:
