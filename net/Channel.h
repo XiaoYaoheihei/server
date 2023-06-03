@@ -17,7 +17,7 @@ class Channel{
     void setWrite(const EventCallback& cb); 
     void setError(const EventCallback& cb);
 
-    void setRevent(int event);
+    void setRevent(short event);
     int getIndex(); 
     void setIndex(int number); 
     int getFd(); 
@@ -32,7 +32,7 @@ class Channel{
     //channel关心的事件
     int events;     
     //目前活动的事件
-    int runningEvent;
+    short runningEvent;
     EventLoop* loop_;
     const int fd_;
     int index;

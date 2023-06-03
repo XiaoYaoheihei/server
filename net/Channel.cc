@@ -1,5 +1,6 @@
 #include "../net/Channel.h"
 #include "../net/EventLoop.h"
+#include <iostream>
 #include <poll.h>
 
 //事件掩码来判断事件类型
@@ -19,7 +20,7 @@ Channel::Channel(EventLoop* loop, int fd)
 
 //由EventLoop的loop调用，根据runningEvent的值来调用不同的回调函数
 void Channel::handleEvent() {
-
+  std::cout << this->runningEvent << std::endl;
   if (runningEvent & (POLLERR | POLLNVAL)) {
     //有错误函数回调的话
     if (errorcallback) {
@@ -56,7 +57,7 @@ void Channel::Channel::setError(const EventCallback& cb) {
   errorcallback = cb;
 }
 
-void Channel::setRevent(int event) {
+void Channel::setRevent(short event) {
   runningEvent = event;
 }
 int Channel::getIndex() {
