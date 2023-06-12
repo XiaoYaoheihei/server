@@ -35,7 +35,7 @@ class TimerQueue {
     //cansel()
   private:
     //添加定时器任务到优先队列当中去
-    void addTimerInLoop(std::shared_ptr<Timer>& timer);
+    void addTimerInLoop(const std::shared_ptr<Timer>& timer);
     
     //处理回调事件
     void handleRead();
@@ -48,8 +48,8 @@ class TimerQueue {
     bool insert(const std::shared_ptr<Timer> &timer);
 
     EventLoop* loop_;
+    const int timerfd;
     Channel timerfdchannel;
-    int timerfd;
     TimerList timers_;
 };
 

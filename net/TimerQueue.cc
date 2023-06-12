@@ -1,12 +1,14 @@
 #include "../net/TimerQueue.h"
 #include "../net/Channel.h"
 #include <sys/timerfd.h>
+#include <iostream>
 
 int creatTimerFd() {
   int timefd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-
+  // std::cout << timefd << "timerfd"<< std::endl;
   if (timefd < 0) {
     //打印日志，timerfd创建失败
+    std::cout << "print fail" << std::endl;
   }
   return timefd;
 }
@@ -28,8 +30,9 @@ TimerQueue::~TimerQueue() {
 std::weak_ptr<Timer> TimerQueue::addTimer(TimeCallback cb,
                                           Timer::TimePoint when,
                                           Timer::TimeUnit dur) {
-  std::shared_ptr<Timer> time = std::make_shared<Timer>(std::move(cb), when, dur);
-  addTimerInLoop(time);
+  const std::shared_ptr<Timer> time = std::make_shared<Timer>(std::move(cb), when, dur);
+  //lambda表达式的写法
+  loop_->runInLoop([this, time]{ addTimerInLoop(time);});
   
   return time;
 }
@@ -50,12 +53,14 @@ void TimerQueue::handleRead() {
 }
 
 //添加定时器任务到事件循环中去
-void TimerQueue::addTimerInLoop(std::shared_ptr<Timer>& timer) {
+void TimerQueue::addTimerInLoop(const std::shared_ptr<Timer>& timer) {
   bool ok = insert(timer);
   if (ok) {
     //打印日志显示添加到优先队列成功
+    // std::cout << "add success " << std::endl;
   } else {
     //添加到优先队列失败
+    // std::cout << "add fail" << std::endl;
   }
 }
 
@@ -79,6 +84,10 @@ std::vector<std::shared_ptr<Timer>> TimerQueue::getExpired(const Timer::TimePoin
 bool TimerQueue::insert(const std::shared_ptr<Timer>& timer) {
   bool ok = false;
   if (!timers_.empty()) {
+    //定时器队列是非空的话
+    timers_.push(timer);
+    ok = true;
+  } else {
     timers_.push(timer);
     ok = true;
   }
