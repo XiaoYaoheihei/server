@@ -1,14 +1,20 @@
 #include <iostream>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <algorithm>
+
 #include "../net/EventLoop.h"
 #include "../net/poller.h"
 #include "../net/Channel.h"
 #include "../net/TimerQueue.h"
 
-const int PollTimeMs = 10000;
+const int PollTimeMs = 100;
 
 EventLoop::EventLoop()
-  : poller_(std::make_unique<Poller>(this)),
+  : looping(false),
     quit_(false),
+    threadId(syscall(SYS_gettid)),
+    poller_(std::make_unique<Poller>(this)),
     timerQueue_(std::make_unique<TimerQueue>(this)) {
 
 }
@@ -61,4 +67,16 @@ std::weak_ptr<Timer> EventLoop::runAfter(const std::chrono::nanoseconds& delay, 
 std::weak_ptr<Timer> EventLoop::runEvery(const std::chrono::nanoseconds& interval, TimeCallback cb) {
   Timer::TimePoint time = std::chrono::steady_clock::now() + interval;
   return timerQueue_->addTimer(cb, time, Timer::TimeUnit());
+}
+
+bool EventLoop::isInloopThread() {
+  return threadId == syscall(SYS_gettid);
+}
+
+void EventLoop::runInLoop(const Functor& callback) {
+  if (isInloopThread()) {
+    callback();
+  } else {
+    queueInLoop(callback);
+  }
 }

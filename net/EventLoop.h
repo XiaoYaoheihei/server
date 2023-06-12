@@ -16,9 +16,14 @@ class EventLoop{
     EventLoop();
     ~EventLoop();
 
+    bool isInloopThread();
+
     void loop();
     void quit();
     void updateChannel(Channel* channel);
+    //把任务放到IO线程中执行
+    void runInLoop(const Functor& callback);
+    void queueInLoop(const Functor& callback);
 
     //timer
     std::weak_ptr<Timer> runAt(const std::chrono::steady_clock::time_point& time, TimeCallback cb);
@@ -31,6 +36,7 @@ class EventLoop{
 
     bool looping;
     bool quit_;
+    const pid_t threadId;
     //这里的Poller还待改进
     std::unique_ptr<Poller> poller_;
     
