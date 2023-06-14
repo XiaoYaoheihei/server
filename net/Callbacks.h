@@ -7,5 +7,5 @@
 //定时器回调函数
 typedef std::function<void()> TimeCallback;
 
-
+typedef std::function<void()> Functor;
 #endif
