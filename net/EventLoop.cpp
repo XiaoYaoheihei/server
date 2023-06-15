@@ -92,6 +92,7 @@ std::weak_ptr<Timer> EventLoop::runEvery(const std::chrono::nanoseconds& interva
 }
 
 bool EventLoop::isInloopThread() {
+  //打印相关日志
   return threadId == syscall(SYS_gettid);
 }
 
