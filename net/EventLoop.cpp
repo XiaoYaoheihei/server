@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <sys/eventfd.h>
 #include <algorithm>
 
 #include "../net/EventLoop.h"
@@ -10,13 +11,29 @@
 
 const int PollTimeMs = 100;
 
+int createEventfd() {
+  int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+  if (evtfd < 0) {
+    // LOG_SYSERR << "Failed in eventfd";
+    abort();
+  }
+  return evtfd;
+}
+
 EventLoop::EventLoop()
   : looping(false),
     quit_(false),
+    //syscall的这种写法
     threadId(syscall(SYS_gettid)),
+    eventHanding(false),
+    callingPendingFunctors(false),
     poller_(std::make_unique<Poller>(this)),
+    wakeupFd(createEventfd()),
+    wakeupChannel(std::make_unique<Channel>(wakeupFd, this)),
     timerQueue_(std::make_unique<TimerQueue>(this)) {
-
+      wakeupChannel->setRead(std::bind(&EventLoop::handleRead, this));
+      //一直从wakeupFd中读取信息
+      wakeupChannel->enableReading();
 }
 
 EventLoop::~EventLoop() {
@@ -34,12 +51,14 @@ void EventLoop::loop() {
     activeChannels.clear();
 
     poller_->poll(&activeChannels, PollTimeMs);
-
+    eventHanding = true;
     for (auto channel : activeChannels) {
       //日志信息
       std::cout << "start to callback" << std::endl;
       channel->handleEvent();
     }
+    eventHanding = false;
+    doPendingFunctors();
   }
 
   quit_ = true;
@@ -47,6 +66,9 @@ void EventLoop::loop() {
 
 void EventLoop::quit() {
   quit_ = true;
+  if (!isInloopThread()) {
+    wakeup();
+  }
 }
 
 void EventLoop::updateChannel(Channel* channel) {
@@ -74,9 +96,45 @@ bool EventLoop::isInloopThread() {
 }
 
 void EventLoop::runInLoop(const Functor& callback) {
+  //如果该EventLoop是IO线程，直接执行
   if (isInloopThread()) {
     callback();
   } else {
+    //不是IO线程的话，
     queueInLoop(callback);
   }
+}
+
+void EventLoop::queueInLoop(const Functor& callback) {
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    pendingFunctors.push_back(callback);
+  }
+  if (!isInloopThread() || callingPendingFunctors) {
+    wakeup();
+  }
+}
+
+void EventLoop::wakeup() {
+  uint64_t one = 1;
+  ssize_t n = write(wakeupFd, &one, sizeof(one));
+}
+
+void EventLoop::handleRead() {
+  uint64_t one = 1;
+  ssize_t n = read(wakeupFd, &one, sizeof(one));
+}
+
+void EventLoop::doPendingFunctors() {
+  std::vector<Functor> functors;
+  callingPendingFunctors = true;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    functors.swap(pendingFunctors);
+  }
+
+  for (const Functor& functor : functors) {
+    functor();
+  }
+  callingPendingFunctors = false;
 }
