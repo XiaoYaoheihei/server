@@ -15,7 +15,7 @@ class Timer{
         expiration(when),
         interval(dur),
         del(false),
-        rep(),
+        rep(interval.count() > 0),
         sequence(numCreated++) {};
     
     void run() const {

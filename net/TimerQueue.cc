@@ -13,6 +13,22 @@ int creatTimerFd() {
   return timefd;
 }
 
+//开启定时器
+void resetTimerFd(int timerFd, Timer::TimePoint expiration) {
+  struct itimerspec newValue {};
+  Timer::TimeUnit nsec = expiration - std::chrono::steady_clock::now();
+  //重新设置时间
+  newValue.it_value.tv_sec =
+      std::chrono::duration_cast<std::chrono::duration<int64_t>>(nsec).count();
+  newValue.it_value.tv_nsec = nsec.count() % 1000000000;
+  //定时器开始计时
+  int ret = timerfd_settime(timerFd, 0, &newValue, nullptr);
+  if (ret) {
+    
+    // LOG_SYSERR << "timerfd_settime()";
+  }
+}
+
 
 TimerQueue::TimerQueue(EventLoop* loop) 
   : loop_(loop),
@@ -32,7 +48,7 @@ std::weak_ptr<Timer> TimerQueue::addTimer(TimeCallback cb,
                                           Timer::TimeUnit dur) {
   const std::shared_ptr<Timer> time = std::make_shared<Timer>(std::move(cb), when, dur);
   //lambda表达式的写法
-  loop_->runInLoop([this, time]{ addTimerInLoop(time);});
+  loop_->runInLoop([this, time] { addTimerInLoop(time);});
   
   return time;
 }
@@ -57,6 +73,8 @@ void TimerQueue::addTimerInLoop(const std::shared_ptr<Timer>& timer) {
   bool ok = insert(timer);
   if (ok) {
     //打印日志显示添加到优先队列成功
+    //开启定时器
+    resetTimerFd(timerfd, timer->getExpiration());
     // std::cout << "add success " << std::endl;
   } else {
     //添加到优先队列失败
