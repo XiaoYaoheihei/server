@@ -7,10 +7,11 @@
 namespace socketopts {
   int creatSocket();
   void filladdr(struct sockaddr_in* addr, int port);
-  void bindOrdie(int lfd, struct sockaddr_in* addr);
+  void bindOrdie(int lfd, const struct sockaddr_in* addr);
   void setListen(int lfd);
   void close(int fd);
-  int acceptConn(int lfd, struct sockaddr_in *addr, socklen_t* size);
+  int acceptConn(int lfd,const struct sockaddr_in *addr);
+  void setReuseport(int socketfd, bool on);
 }
 
 #endif
