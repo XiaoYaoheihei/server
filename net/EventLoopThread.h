@@ -3,12 +3,13 @@
 #include <mutex>
 #include <condition_variable>
 #include "Callbacks.h"
+// #include "EventLoop.h"
 #include "../base/Thread.h"
 
-class EventLoop;
 class EventLoopThread {
   public:
-    EventLoopThread(const ThreadInitCallback& callback, const std::string& name);
+    EventLoopThread(const std::string& name = std::string());
+    // EventLoopThread(const ThreadInitCallback& callback = ThreadInitCallback(), const std::string& name = std::string());
     ~EventLoopThread();
     EventLoop* startLoop();
 
@@ -20,7 +21,7 @@ class EventLoopThread {
     Thread thread_;
     std::mutex mutex_;
     std::condition_variable cond_;
-    ThreadInitCallback threadinitcallback_;
+    // ThreadInitCallback threadinitcallback_;
 
 };
 
