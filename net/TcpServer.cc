@@ -1,6 +1,7 @@
 #include "TcpServer.h"
 #include "Acceptor.h"
 #include "EventLoop.h"
+#include <iostream>
 
 //这个存在是干什么的
 using std::placeholders::_1;
@@ -31,13 +32,15 @@ void TcpServer::setConnectionCallback(const ConnectionCallback& cb) {
 
 //为通信fd建立专门的类(可以理解成通用的客户端)进行管理
 //每一个通信fd都对应一个TcpConnection
+//Acceptor的回调函数handleRead会调用此函数
 void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
   char buf[32];
   snprintf(buf, sizeof(buf), "#%d", nextConnId_);
   ++nextConnId_;
   std::string connName = name_+buf;
 
-  //打印相关日志信息
+  std::cout << "start to build the TcpConnection" << std::endl;
+  //打印相关日志信息 
 
   TcpConnectionptr conn(new TcpConnection(loop_, connName, sockfd, localaddr_, peeraddr));
   connections_[connName] = conn;
