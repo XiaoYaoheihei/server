@@ -1,6 +1,6 @@
 #ifndef NET_CALLBACKS_H
 #define NET_CALLBACKS_H
-
+#include <memory>
 #include <functional>
 
 class EventLoop;
@@ -17,7 +17,7 @@ typedef std::function<void (int sockfd, const struct sockaddr_in&)>
   NewConnectionCallback;
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionptr;
-typedef std::function<const TcpConnectionptr&> ConnectionCallback;
+typedef std::function<void (const TcpConnectionptr&)> ConnectionCallback;
 // typedef std::function<const TcpConnectionptr&, Buffer*, Timestamp> MessageCallback;
 
 #endif
