@@ -19,5 +19,7 @@ typedef std::function<void (int sockfd, const struct sockaddr_in&)>
 typedef std::shared_ptr<TcpConnection> TcpConnectionptr;
 typedef std::function<void (const TcpConnectionptr&)> ConnectionCallback;
 // typedef std::function<const TcpConnectionptr&, Buffer*, Timestamp> MessageCallback;
+typedef std::function<void (const TcpConnectionptr&)> CloseCallback;
+typedef std::function<void (const TcpConnectionptr&)> WriteCompleteCallback;
 
 #endif
