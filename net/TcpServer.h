@@ -14,9 +14,10 @@ class TcpServer {
 
     void setConnectionCallback(const ConnectionCallback& cb);
     // void setMessageCallback(const MessageCallback& cb);
-
+    
   private:
     void newConnection(int sockfd, const struct sockaddr_in& peeraddr);
+    void removeConnection(const TcpConnectionptr& conn);
 
     typedef std::map<std::string, TcpConnectionptr> ConnectionMap;
     EventLoop* loop_;

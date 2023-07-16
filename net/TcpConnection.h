@@ -18,20 +18,28 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 
     bool connected();
     void connectionEstablished();
-
+    //当TcpServer从map中移除了此TcpConnection的时候调用此函数
+    //此函数只允许被调用一次
+    void connectionDestroyed();
 
     // void setMessageCallBack(const MessageCallback& callback);
     void setConnectionCallBack(const ConnectionCallback& callback);
-  
+    //内部只调用closecallback一次
+    void setCloseCallback(const ConnectionCallback& callback);
+    void setWriteCompleteCallback(const ConnectionCallback& callback);
+
   private:
     enum StateE {
       kConnecting,
       kConnected,
+      kDisconnected,
     };
 
     void setState(StateE s) {state_ = s;}
     //回调事件
     void handleRead();
+    void handleClose();
+    void handleError();
 
     EventLoop* loop_;
     std::string name_;
@@ -43,7 +51,8 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 
     ConnectionCallback connectioncallback_;
     // MessageCallback messagecallback_;
-
+    CloseCallback closecallback_;
+    WriteCompleteCallback writecompletecallback_;
 };
 
 

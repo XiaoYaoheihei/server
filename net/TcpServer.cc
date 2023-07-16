@@ -44,7 +44,16 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
 
   TcpConnectionptr conn(new TcpConnection(loop_, connName, sockfd, localaddr_, peeraddr));
   connections_[connName] = conn;
+  //TcpServer的connectioncallback给TcpConnection进行赋值
   conn->setConnectionCallBack(connectioncallback_);
-
+  //TcpServer向TcpConnection注册closeCallback
+  conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, _1));
+  
   conn->connectionEstablished();
+}
+
+//目前是直接删除对应的Tcpconnection,还没有加线程池的部分
+void TcpServer::removeConnection(const TcpConnectionptr& conn) {
+  size_t n = connections_.erase(conn->getname());
+  loop_->queueInLoop(std::bind(&TcpConnection::connectionDestroyed, conn));
 }
