@@ -29,7 +29,7 @@ EventLoop::EventLoop()
     callingPendingFunctors(false),
     poller_(std::make_unique<Poller>(this)),
     wakeupFd(createEventfd()),
-    wakeupChannel(std::make_unique<Channel>(wakeupFd, this)),
+    wakeupChannel(std::make_unique<Channel>(this, wakeupFd)),
     timerQueue_(std::make_unique<TimerQueue>(this)) {
       wakeupChannel->setRead(std::bind(&EventLoop::handleRead, this));
       //一直从wakeupFd中读取信息
@@ -54,7 +54,7 @@ void EventLoop::loop() {
     eventHanding = true;
     for (auto channel : activeChannels) {
       //日志信息
-      std::cout << "start to callback" << std::endl;
+      // std::cout << "start to callback" << std::endl;
       channel->handleEvent();
     }
     eventHanding = false;
@@ -75,11 +75,19 @@ void EventLoop::updateChannel(Channel* channel) {
   poller_->updateChannel(channel);
 } 
 
+void EventLoop::removeChannel(Channel* channel) {
+  if (eventHanding) {
+    //目前不知道这里是干什么的？？？
+    std::find(activeChannels.begin(), activeChannels.end(), channel);
+  }
+
+  poller_->removeChannel(channel);
+}
+
 //在某一时刻回调定时器任务
 std::weak_ptr<Timer> EventLoop::runAt(const std::chrono::steady_clock::time_point& time, TimeCallback cb) {
   return timerQueue_->addTimer(std::move(cb), time, Timer::TimeUnit());
 }
-
 //延迟执行回调
 std::weak_ptr<Timer> EventLoop::runAfter(const std::chrono::nanoseconds& delay, TimeCallback cb) {
   Timer::TimePoint time = std::chrono::steady_clock::now() + delay;
@@ -97,11 +105,15 @@ bool EventLoop::isInloopThread() {
 }
 
 void EventLoop::runInLoop(const Functor& callback) {
+  std::cout << syscall(SYS_gettid);
+  std::cout << " " << threadId << std::endl;
   //如果该EventLoop是IO线程，直接执行
   if (isInloopThread()) {
+    //打印日志，直接执行
     callback();
   } else {
-    //不是IO线程的话，
+    //不是IO线程的话，异步执行
+    //打印日志，采取异步执行的方式
     queueInLoop(callback);
   }
 }

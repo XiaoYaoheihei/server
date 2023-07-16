@@ -23,7 +23,8 @@ class EventLoop{
     void quit();
     void updateChannel(Channel* channel);
     void wakeup();
-
+    void removeChannel(Channel* channel);
+    
     //把任务放到IO线程中执行
     void runInLoop(const Functor& callback);
     void queueInLoop(const Functor& callback);

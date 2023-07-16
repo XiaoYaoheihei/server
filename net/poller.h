@@ -16,7 +16,8 @@ class Poller {
     //仅供EventLoop调用
     void poll(ChannelList* activeChannels, int times);
     void updateChannel(Channel* chan);
-
+    void removeChannel(Channel* chan);
+    
   private:
     void fillactiveChannels(int numEvents, 
                             ChannelList* activeChannels);

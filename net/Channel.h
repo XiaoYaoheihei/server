@@ -12,11 +12,14 @@ class Channel{
     ~Channel() = default;
     void handleEvent(); 
 
+    void remove();
+
     //回调函数具体赋值，cb是函数指针
     void setRead(const EventCallback& cb);
     void setWrite(const EventCallback& cb); 
     void setError(const EventCallback& cb);
-
+    void setClose(const EventCallback& cb);
+    
     void setRevent(short event);
     int getIndex(); 
     void setIndex(int number); 
@@ -26,6 +29,11 @@ class Channel{
     int getPollIdx(); 
 
     void enableReading(); 
+    void disableAll();
+
+
+    bool Is_noneEvent();
+
   private:
     void update();
 
@@ -35,16 +43,19 @@ class Channel{
     short runningEvent;
     EventLoop* loop_;
     const int fd_;
-    int index;
+    // int index;
     int pollidx;
 
     EventCallback readcallback;
     EventCallback writecallback;
     EventCallback errorcallback;
+    EventCallback closecallback;
 
     static const int NoEvent;
     static const int ReadEvent;
     static const int WriteEvent;
+
+    bool eventHanding;
 };
 
 #endif
