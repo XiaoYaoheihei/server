@@ -8,6 +8,7 @@
 #include "../net/poller.h"
 #include "../net/Channel.h"
 #include "../net/TimerQueue.h"
+#include "../base/Timestamp.h"
 
 const int PollTimeMs = 100;
 
@@ -50,12 +51,12 @@ void EventLoop::loop() {
   while (!quit_) {
     activeChannels.clear();
 
-    poller_->poll(&activeChannels, PollTimeMs);
+    Timestamp ret_ = poller_->poll(&activeChannels, PollTimeMs);
     eventHanding = true;
     for (auto channel : activeChannels) {
       //日志信息
       // std::cout << "start to callback" << std::endl;
-      channel->handleEvent();
+      channel->handleEvent(ret_);
     }
     eventHanding = false;
     doPendingFunctors();

@@ -1,5 +1,6 @@
 #include "../net/Channel.h"
 #include "../net/EventLoop.h"
+#include "../base/Timestamp.h"
 #include <iostream>
 #include <poll.h>
 
@@ -21,7 +22,7 @@ Channel::Channel(EventLoop* loop, int fd)
 }
 
 //由EventLoop的loop调用，根据runningEvent的值来调用不同的回调函数
-void Channel::handleEvent() {
+void Channel::handleEvent(Timestamp receivetime) {
   std::cout << "now running events is:" << this->runningEvent << std::endl;
   eventHanding = true;
   if (runningEvent & (POLLERR | POLLNVAL)) {
@@ -32,7 +33,7 @@ void Channel::handleEvent() {
   }
   if (runningEvent & (POLLIN | POLLPRI | POLLRDHUP)) {
     if (readcallback) {
-      readcallback();
+      readcallback(receivetime);
     }
   }
   if (runningEvent & POLLOUT) {
@@ -57,7 +58,7 @@ void Channel::remove() {
 }
 
 
-void Channel::setRead(const EventCallback& cb) {
+void Channel::setRead(const ReadEventCallback& cb) {
   readcallback = cb;
 }
 

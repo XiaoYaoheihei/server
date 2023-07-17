@@ -30,6 +30,10 @@ void TcpServer::setConnectionCallback(const ConnectionCallback& cb) {
   connectioncallback_ = cb;
 }
 
+void TcpServer::setMessageCallback(const MessageCallback& cb) {
+  messagecallback_ = cb;
+}
+
 //为通信fd建立专门的类(可以理解成通用的客户端)进行管理
 //每一个通信fd都对应一个TcpConnection
 //Acceptor的回调函数handleRead会调用此函数
@@ -49,6 +53,7 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
   //TcpServer向TcpConnection注册closeCallback
   conn->setCloseCallback(std::bind(&TcpServer::removeConnection, this, _1));
   
+  conn->setMessageCallBack(messagecallback_);
   conn->connectionEstablished();
 }
 

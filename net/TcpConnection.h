@@ -4,6 +4,7 @@
 #include <memory>
 #include "Callbacks.h"
 #include "EventLoop.h"
+#include "../base/Timestamp.h"
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
   public:
@@ -22,7 +23,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     //此函数只允许被调用一次
     void connectionDestroyed();
 
-    // void setMessageCallBack(const MessageCallback& callback);
+    void setMessageCallBack(const MessageCallback& callback);
     void setConnectionCallBack(const ConnectionCallback& callback);
     //内部只调用closecallback一次
     void setCloseCallback(const ConnectionCallback& callback);
@@ -37,7 +38,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 
     void setState(StateE s) {state_ = s;}
     //回调事件
-    void handleRead();
+    void handleRead(Timestamp reveiveTime);
     void handleClose();
     void handleError();
 
@@ -50,9 +51,11 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     struct sockaddr_in peerAddr_;
 
     ConnectionCallback connectioncallback_;
-    // MessageCallback messagecallback_;
+    MessageCallback messagecallback_;
     CloseCallback closecallback_;
     WriteCompleteCallback writecompletecallback_;
+    Buffer inputbuf_;
+    // Buffer outputbuf_;
 };
 
 

@@ -13,7 +13,7 @@ class TcpServer {
     void start();
 
     void setConnectionCallback(const ConnectionCallback& cb);
-    // void setMessageCallback(const MessageCallback& cb);
+    void setMessageCallback(const MessageCallback& cb);
     
   private:
     void newConnection(int sockfd, const struct sockaddr_in& peeraddr);
@@ -25,7 +25,7 @@ class TcpServer {
     const struct sockaddr_in localaddr_;
     std::unique_ptr<Acceptor> acceptor_;
     ConnectionCallback connectioncallback_;
-    // MessageCallback messagecallback_;
+    MessageCallback messagecallback_;
     ConnectionMap connections_;
     int nextConnId_;
 };

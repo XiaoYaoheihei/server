@@ -15,7 +15,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& name, int sockf
     peerAddr_(peerAddr) {
       //打印日志，打印TcpConnection的相关信息
 
-      channel_->setRead(std::bind(&TcpConnection::handleRead, this));
+      channel_->setRead(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
       channel_->setClose(std::bind(&TcpConnection::handleClose, this));
       channel_->setError(std::bind(&TcpConnection::handleError, this));
       // channel_->setWriteCallBack(std::bind(&TcpConnection::handleWrite, this));
@@ -62,15 +62,20 @@ void TcpConnection::connectionDestroyed() {
 }
 
 
-void TcpConnection::handleRead() {
+void TcpConnection::handleRead(Timestamp receiveTime) {
   //现在只是简单的读取消息，还没有加缓冲类
-  char buf[65536];
-  ssize_t n = ::read(channel_->getFd(), buf, sizeof(buf));
+  // char buf[65536];
+  // ssize_t n = ::read(channel_->getFd(), buf, sizeof(buf));
+  int Errno;
+  int n = inputbuf_.readFd(channel_->getFd(), &Errno);
   //需要打印相关日志
   std::cout << "read ok" << std::endl;
   if (n > 0) {
     //要进行相关通信
     //后续需要添加messagecallback
+    // LOG_DEBUG << n;
+    std::cout << "read message is:" << n << std::endl;
+    messagecallback_(shared_from_this(), &inputbuf_, receiveTime);
   } else if (n == 0) {
     std::cout << "need to close" << std::endl;
     //如果是对面客户端主动退出，channel中读取的是0!!!
@@ -106,4 +111,8 @@ void TcpConnection::setCloseCallback(const ConnectionCallback& cb) {
 
 void TcpConnection::setWriteCompleteCallback(const ConnectionCallback& cb) {
   writecompletecallback_ = cb;
+}
+
+void TcpConnection::setMessageCallBack(const MessageCallback& cb) {
+  messagecallback_ = cb;
 }

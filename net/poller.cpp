@@ -1,5 +1,6 @@
 #include "../net/poller.h"
 #include "../net/Channel.h"
+#include "../base/Timestamp.h"
 #include <poll.h>
 #include <iostream>
 
@@ -12,9 +13,10 @@ Poller::~Poller() {
 
 }
 
-void Poller::poll(ChannelList* activeChannels, int times) {
+Timestamp Poller::poll(ChannelList* activeChannels, int times) {
   //阻塞循环
   int numEvents = ::poll(PollFdList.data(), PollFdList.size(), times);
+  Timestamp timestamp;
   if (numEvents > 0) {
     std::cout << "有事件触发" << " " << numEvents << std::endl;
     fillactiveChannels(numEvents, activeChannels);
@@ -22,6 +24,7 @@ void Poller::poll(ChannelList* activeChannels, int times) {
 
   //日志本应该记录此时的时间
   // std::cout << "事件填充完毕" << std::endl;
+  return timestamp;
 }
 
 

@@ -1,21 +1,22 @@
 #ifndef NET_CHANNEL_H
 #define NET_CHANNEL_H
-
-#include <functional>
+#include "../base/Timestamp.h"
+// #include <functional>
+#include "Callbacks.h"
 
 class EventLoop;
 class Channel{
   public:
-    typedef std::function<void()> EventCallback;
+    // typedef std::function<void()> EventCallback;
     
     Channel(EventLoop* loop, int fd);
     ~Channel() = default;
-    void handleEvent(); 
+    void handleEvent(Timestamp receivetime); 
 
     void remove();
 
     //回调函数具体赋值，cb是函数指针
-    void setRead(const EventCallback& cb);
+    void setRead(const ReadEventCallback& cb);
     void setWrite(const EventCallback& cb); 
     void setError(const EventCallback& cb);
     void setClose(const EventCallback& cb);
@@ -46,7 +47,7 @@ class Channel{
     // int index;
     int pollidx;
 
-    EventCallback readcallback;
+    ReadEventCallback readcallback;
     EventCallback writecallback;
     EventCallback errorcallback;
     EventCallback closecallback;

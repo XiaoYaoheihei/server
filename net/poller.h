@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include "../base/Timestamp.h"
 
 class EventLoop;
 class Channel;
@@ -14,7 +15,7 @@ class Poller {
     ~Poller();
 
     //仅供EventLoop调用
-    void poll(ChannelList* activeChannels, int times);
+    Timestamp poll(ChannelList* activeChannels, int times);
     void updateChannel(Channel* chan);
     void removeChannel(Channel* chan);
     
