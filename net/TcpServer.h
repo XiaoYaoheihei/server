@@ -14,8 +14,9 @@ class TcpServer {
 
     void setConnectionCallback(const ConnectionCallback& cb);
     void setMessageCallback(const MessageCallback& cb);
-    
-  private:
+    void setWritecomletelyCallback(const WriteCompleteCallback& cb);
+
+  private :
     void newConnection(int sockfd, const struct sockaddr_in& peeraddr);
     void removeConnection(const TcpConnectionptr& conn);
 
@@ -25,6 +26,8 @@ class TcpServer {
     const struct sockaddr_in localaddr_;
     std::unique_ptr<Acceptor> acceptor_;
     ConnectionCallback connectioncallback_;
+    //低水位回调
+    WriteCompleteCallback writecompletecallback_;
     MessageCallback messagecallback_;
     ConnectionMap connections_;
     int nextConnId_;

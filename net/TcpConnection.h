@@ -29,11 +29,17 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     void setCloseCallback(const ConnectionCallback& callback);
     void setWriteCompleteCallback(const ConnectionCallback& callback);
 
+    void send(const std::string& message);
+    void send(Buffer* message);
+    //线程安全的
+    void shutdown();
+
   private:
     enum StateE {
       kConnecting,
       kConnected,
       kDisconnected,
+      kDisconnecting,
     };
 
     void setState(StateE s) {state_ = s;}
@@ -41,6 +47,10 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     void handleRead(Timestamp reveiveTime);
     void handleClose();
     void handleError();
+    void handleWrite();
+
+    void sendInloop(const std::string& message);
+    void shutdownInloop();
 
     EventLoop* loop_;
     std::string name_;
@@ -55,7 +65,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     CloseCallback closecallback_;
     WriteCompleteCallback writecompletecallback_;
     Buffer inputbuf_;
-    // Buffer outputbuf_;
+    Buffer outputbuf_;
 };
 
 
