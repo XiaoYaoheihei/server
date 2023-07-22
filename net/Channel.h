@@ -31,9 +31,12 @@ class Channel{
 
     void enableReading(); 
     void disableAll();
+    void enableWriting();
+    void disableWriting();
 
 
     bool Is_noneEvent();
+    bool Is_writing();
 
   private:
     void update();

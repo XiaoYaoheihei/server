@@ -25,13 +25,13 @@ Channel::Channel(EventLoop* loop, int fd)
 void Channel::handleEvent(Timestamp receivetime) {
   std::cout << "now running events is:" << this->runningEvent << std::endl;
   eventHanding = true;
-  if (runningEvent & (POLLERR | POLLNVAL)) {
-    //有错误函数回调的话
-    if (errorcallback) {
-      errorcallback();
-    }
-  }
-  if (runningEvent & (POLLIN | POLLPRI | POLLRDHUP)) {
+  // if (runningEvent & (POLLERR | POLLNVAL)) {
+  //   //有错误函数回调的话
+  //   if (errorcallback) {
+  //     errorcallback();
+  //   }
+  // }
+  if (runningEvent & (POLLIN | POLLPRI | POLLHUP | POLLRDHUP | POLLERR )) {
     if (readcallback) {
       readcallback(receivetime);
     }
@@ -74,6 +74,7 @@ void Channel::setError(const EventCallback& cb) {
   errorcallback = cb;
 }
 
+//设置目前的活动事件
 void Channel::setRevent(short event) {
   runningEvent = event;
 }
@@ -108,6 +109,20 @@ void Channel::disableAll() {
   update();
 }
 
+void Channel::enableWriting() {
+  events |= WriteEvent;
+  update();
+}
+
+void Channel::disableWriting() {
+  events &= ~WriteEvent;
+  update();
+}
+
 bool Channel::Is_noneEvent() {
   return !events;
+}
+
+bool Channel::Is_writing() {
+  return events & WriteEvent;
 }
