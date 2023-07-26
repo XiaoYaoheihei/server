@@ -33,6 +33,9 @@ void Epoll::fillactiveChannels(int numEvents,
   }
 }
 
+//-1表示第一次更新
+//2表示待添加的
+//1表示已经添加的
 void Epoll::updateChannel(Channel* chan) {
   int index = chan->getPollIdx();
   int fd = chan->getFd();
@@ -42,13 +45,15 @@ void Epoll::updateChannel(Channel* chan) {
       //打印ChannelMap的大小
       // LOG_DEBUG<<channels_.size();
     } else {
-
+      //此channel没有关注的事件，待添加到Epoll中
     }
     chan->setPollIdx(1);
     update(EPOLL_CTL_ADD, chan);
   } else {
+    //已经在epoll中存在的
     if (chan->Is_noneEvent()) {
-      //此时的channel没有需要关注的事件,删除相关
+      //此时的channel没有需要关注的事件,、
+      //epoll中删除相关信息
       update(EPOLL_CTL_DEL, chan);
       chan->setPollIdx(2);
     } else {
@@ -72,6 +77,7 @@ void Epoll::removeChannel(Channel* channel) {
   size_t n = channels_.erase(fd);
   // LOG_DEBUG<<channels_.size();
   if (index == 1) {
+    //删除epoll中的相关信息
     update(EPOLL_CTL_DEL, channel);
   }
   channel->setPollIdx(-1);
