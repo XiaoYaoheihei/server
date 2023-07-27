@@ -2,11 +2,16 @@
 #include "../net/poller.h"
 #include "../net/Channel.h"
 #include "../base/Timestamp.h"
+#include <unistd.h>
 
 Epoll::Epoll(EventLoop* loop) 
   : owner(loop),
     epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
     events_(16) {}
+
+Epoll::~Epoll() {
+  ::close(epollfd_);
+}
 
 Timestamp Epoll::poll(ChannelList* activeChannels, int times) {
   int numEvents = ::epoll_wait(epollfd_, &*events_.begin(),
