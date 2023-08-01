@@ -8,8 +8,9 @@
 
 class EventLoopThread {
   public:
-    EventLoopThread(const std::string& name = std::string());
-    // EventLoopThread(const ThreadInitCallback& callback = ThreadInitCallback(), const std::string& name = std::string());
+    // EventLoopThread(const std::string& name = std::string());
+    //供EventLoopThreadPool调用
+    EventLoopThread(const ThreadInitCallback& callback, const std::string& name);
     ~EventLoopThread();
     EventLoop* startLoop();
 
@@ -21,7 +22,7 @@ class EventLoopThread {
     Thread thread_;
     std::mutex mutex_;
     std::condition_variable cond_;
-    // ThreadInitCallback threadinitcallback_;
+    ThreadInitCallback threadinitcallback_;
 
 };
 

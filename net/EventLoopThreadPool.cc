@@ -21,6 +21,7 @@ void EventLoopThreadPool::start(const ThreadInitCallback& callback) {
     //对每一个Thread命名
     char buf[name_.size() + 32];
     snprintf(buf, sizeof buf, "%s%d", name_.c_str(), i);
+    std::cout << "start to build" << std::endl;
     EventLoopThread* tmp = new EventLoopThread(callback, buf);
     threads_.push_back(std::unique_ptr<EventLoopThread>(tmp));
     //获取EventLoop对象

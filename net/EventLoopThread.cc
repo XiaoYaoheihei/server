@@ -3,13 +3,13 @@
 // IO线程不一定是主线程
 // 在其他线程中创建EventLooop对象，主线程只是获取创建的对象
 
-EventLoopThread::EventLoopThread(const std::string& name) 
+EventLoopThread::EventLoopThread(const ThreadInitCallback& cb, const std::string& name) 
   : loop_(NULL),
     exiting(false),
     //新建一个线程专门用来创建EventLoop对象
-    thread_(std::bind(&EventLoopThread::threadFunc, this))
-    // threadinitcallback_() 
-    {
+    thread_(std::bind(&EventLoopThread::threadFunc, this)),
+    threadinitcallback_(cb) {
+
 }
 
 EventLoopThread::~EventLoopThread() {
