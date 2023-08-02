@@ -1,11 +1,12 @@
 #include "../net/TimerQueue.h"
 #include "../net/Channel.h"
 #include <sys/timerfd.h>
+#include <unistd.h>
 #include <iostream>
 
 int creatTimerFd() {
   int timefd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-  // std::cout << timefd << "timerfd"<< std::endl;
+  std::cout << timefd << "timerfd"<< std::endl;
   if (timefd < 0) {
     //打印日志，timerfd创建失败
     std::cout << "print fail" << std::endl;
@@ -17,16 +18,30 @@ int creatTimerFd() {
 void resetTimerFd(int timerFd, Timer::TimePoint expiration) {
   struct itimerspec newValue {};
   Timer::TimeUnit nsec = expiration - std::chrono::steady_clock::now();
-  //重新设置时间
-  newValue.it_value.tv_sec =
-      std::chrono::duration_cast<std::chrono::duration<int64_t>>(nsec).count();
-  newValue.it_value.tv_nsec = nsec.count() % 1000000000;
+  //重新设置时间,现在这里的时间设置的有问题
+  // newValue.it_value.tv_sec =
+  //     std::chrono::duration_cast<std::chrono::duration<int64_t>>(nsec).count();
+  // newValue.it_value.tv_nsec = nsec.count() % 1000000000;
+  newValue.it_value.tv_sec = 5;
   //定时器开始计时
   int ret = timerfd_settime(timerFd, 0, &newValue, nullptr);
-  if (ret) {
-    
+  if (ret == -1) {
+    perror("timerfd_settime");
     // LOG_SYSERR << "timerfd_settime()";
+  } else {
+    std::cout << "kaiqi" << std::endl;
   }
+}
+
+//读取缓冲区里包含的已经发生的到期次数
+void readTimeFd(int timerFd) {
+  uint64_t buffer;
+  ssize_t n = read(timerFd, &buffer, sizeof buffer);
+  // LOG_DEBUG << "TimerQueue::handleRead(): " << buffer;
+  if (n != sizeof buffer) {
+    // LOG_ERROR << "TimerQueue::handleRead() reads " << n << "bytes instead of 8";
+  }
+  std::cout << buffer << std::endl;
 }
 
 
@@ -48,13 +63,14 @@ std::weak_ptr<Timer> TimerQueue::addTimer(TimeCallback cb,
                                           Timer::TimeUnit dur) {
   const std::shared_ptr<Timer> time = std::make_shared<Timer>(std::move(cb), when, dur);
   //lambda表达式的写法
-  loop_->runInLoop([this, time] { addTimerInLoop(time);});
+  loop_->runInLoop([this, time]() { addTimerInLoop(time);});
   
   return time;
 }
 
 //处理回调事件
 void TimerQueue::handleRead() {
+  readTimeFd(timerfd);
   //获取当前时间
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   //获取已经到时的定时器
@@ -75,7 +91,7 @@ void TimerQueue::addTimerInLoop(const std::shared_ptr<Timer>& timer) {
     //打印日志显示添加到优先队列成功
     //开启定时器
     resetTimerFd(timerfd, timer->getExpiration());
-    // std::cout << "add success " << std::endl;
+    // std::cout << "start success " << std::endl;
   } else {
     //添加到优先队列失败
     // std::cout << "add fail" << std::endl;
@@ -112,8 +128,34 @@ bool TimerQueue::insert(const std::shared_ptr<Timer>& timer) {
   return ok;
 }
 
+//重新设置
 void TimerQueue::reset(const std::vector<std::shared_ptr<Timer>> &expired, const Timer::TimePoint& now) {
   for (auto& i : expired) {
-    i->restart(now);
+    if (i->getRep() && !i->getDel()) {
+      i->restart(now);
+      //重新赋值并且插入到定时器优先队列中去
+      insert(i);
+    }
+  }
+
+  while (!timers_.empty()) {
+    if (!timers_.top()->getDel()) {
+      //重新开启定时器
+      resetTimerFd(timerfd, timers_.top()->getExpiration());
+      break;
+    } else {
+      timers_.pop();
+    }
   }
 }
+
+void TimerQueue::cancel(std::weak_ptr<Timer>& timeId) {
+  loop_->runInLoop([this, timeId] { cancelTimerInLoop(timeId); });
+}
+
+void TimerQueue::cancelTimerInLoop(const std::weak_ptr<Timer>& timerId) {
+  if (!timerId.expired()) {
+    auto guard = timerId.lock();
+    guard->setDel(true);
+  }
+} 

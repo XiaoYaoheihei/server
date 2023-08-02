@@ -2,6 +2,7 @@
 #define NET_TIMERQUEUE_H
 #include "Timer.h"
 #include "Channel.h"
+#include "EventLoop.h"
 #include <memory>
 #include <queue>
 
@@ -20,7 +21,6 @@ struct TimerCmp
 };
 
 
-class EventLoop;
 //定时器队列
 class TimerQueue {
   public:
@@ -32,11 +32,13 @@ class TimerQueue {
     //添加定时器任务
     std::weak_ptr<Timer> addTimer(TimeCallback cb, Timer::TimePoint when, Timer::TimeUnit dur);
     //取消
-    //cansel()
+    void cancel(std::weak_ptr<Timer>& timeId);
+
   private:
     //添加定时器任务到优先队列当中去
     void addTimerInLoop(const std::shared_ptr<Timer>& timer);
-    
+    void cancelTimerInLoop(const std::weak_ptr<Timer>& timer);
+
     //处理回调事件
     void handleRead();
     //获取相应的Timer
