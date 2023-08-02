@@ -2,12 +2,13 @@
 #include "../net/EventLoop.h"
 #include "../base/Timestamp.h"
 #include <iostream>
-#include <poll.h>
+#include "../net/Epoll.h"
+// #include <poll.h>
 
 //事件掩码来判断事件类型
 const int Channel::NoEvent = 0;
-const int Channel::ReadEvent = POLLIN | POLLPRI;
-const int Channel::WriteEvent = POLLOUT;
+const int Channel::ReadEvent = EPOLLIN | EPOLLPRI;
+const int Channel::WriteEvent = EPOLLOUT;
 
 Channel::Channel(EventLoop* loop, int fd) 
   : loop_(loop),
@@ -25,27 +26,37 @@ Channel::Channel(EventLoop* loop, int fd)
 void Channel::handleEvent(Timestamp receivetime) {
   std::cout << "now running events is:" << this->runningEvent << std::endl;
   eventHanding = true;
-  // if (runningEvent & (POLLERR | POLLNVAL)) {
-  //   //有错误函数回调的话
-  //   if (errorcallback) {
-  //     errorcallback();
-  //   }
-  // }
-  if (runningEvent & (POLLIN | POLLPRI | POLLHUP | POLLRDHUP | POLLERR )) {
+  if (runningEvent & EPOLLERR) {
+    //有错误函数回调的话
+    if (errorcallback) {
+      std::cout << "start to read errorcallback" << std::endl;
+      errorcallback();
+    }
+  }
+  //可读取事件，套接字对端关闭
+  //ERR错误事件不应该放在这里
+  if (runningEvent & (EPOLLIN | EPOLLPRI | EPOLLRDHUP )) {
     if (readcallback) {
       readcallback(receivetime);
     }
   }
-  if (runningEvent & POLLOUT) {
+  //数据可写事件
+  if (runningEvent & EPOLLOUT) {
     if (writecallback) {
       writecallback();
     }
   }
-  if ((runningEvent & POLLHUP ) && !(runningEvent & POLLIN)) {
+  //出现挂断事件
+  if (runningEvent & EPOLLHUP ) {
     if (closecallback) {
       closecallback();
     }
   }
+  // if ((runningEvent & EPOLLHUP ) && !(runningEvent & EPOLLIN)) {
+  //   if (closecallback) {
+  //     closecallback();
+  //   }
+  // }
   eventHanding = false;
 }
 

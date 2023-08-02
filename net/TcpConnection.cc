@@ -230,3 +230,8 @@ void TcpConnection::shutdownInloop() {
     ::shutdown(sockfd_, SHUT_WR);
   }
 }
+
+// void TcpConnection::setTcpNoDelay(bool on) {
+//   int optval = on ? 1 :0;
+//   ::setsockopt(sockfd_, IPPROTO_TCP, TCP_NODELAY)
+// }

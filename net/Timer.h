@@ -38,6 +38,9 @@ class Timer{
     void restart(const Timer::TimePoint& now) {
       expiration = now + interval;
     }
+    void setDel(bool on) {
+      del = on;
+    }
   private:
     TimeCallback callback;
     TimePoint expiration;

@@ -1,6 +1,7 @@
 #include "TcpServer.h"
 #include "Acceptor.h"
 #include "EventLoop.h"
+#include "EventLoopThreadPool.h"
 #include <iostream>
 
 //这个存在是干什么的
@@ -14,12 +15,17 @@ TcpServer::TcpServer(EventLoop* loop, const sockaddr_in& addr,
     name_(name),
     localaddr_(addr),
     acceptor_(new Acceptor(loop, addr, reuseport)),
-    nextConnId_(0) {
+    nextConnId_(0),
+    poll_(new EventLoopThreadPool(loop_, name_)) {
       acceptor_->setAccpetCallback(std::bind(&TcpServer::newConnection, this, _1, _2));
 }
 
 TcpServer::~TcpServer() {
 
+}
+
+void TcpServer::setThreadNum(int numThread) {
+  poll_->setThreadNum(numThread);
 }
 
 void TcpServer::start() {
@@ -42,6 +48,8 @@ void TcpServer::setWritecomletelyCallback(const WriteCompleteCallback& cb) {
 //每一个通信fd都对应一个TcpConnection
 //Acceptor的回调函数handleRead会调用此函数
 void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
+  //打印日志信息
+
   char buf[32];
   snprintf(buf, sizeof(buf), "#%d", nextConnId_);
   ++nextConnId_;
@@ -50,7 +58,12 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
   std::cout << "start to build the TcpConnection" << std::endl;
   //打印相关日志信息 
 
-  TcpConnectionptr conn(new TcpConnection(loop_, connName, sockfd, localaddr_, peeraddr));
+  //每次从EventLoopThreadPool中获取ioloop
+  EventLoop* ioloop = poll_->getnextLoop();
+  // ioloop->printThreadId();
+  
+  //把ioloop传给TcpConnection，保证了one loop per thread
+  TcpConnectionptr conn(new TcpConnection(ioloop, connName, sockfd, localaddr_, peeraddr));
   connections_[connName] = conn;
   //TcpServer的connectioncallback给TcpConnection进行赋值
   conn->setConnectionCallBack(connectioncallback_);
@@ -62,8 +75,16 @@ void TcpServer::newConnection(int sockfd, const struct sockaddr_in& peeraddr) {
   conn->connectionEstablished();
 }
 
-//目前是直接删除对应的Tcpconnection,还没有加线程池的部分
+//加线程池的部分
 void TcpServer::removeConnection(const TcpConnectionptr& conn) {
+  loop_->runInLoop(std::bind(&TcpServer::removeConnectionInloop, this, conn));
+}
+
+void TcpServer::removeConnectionInloop(const TcpConnectionptr& conn) {
   size_t n = connections_.erase(conn->getname());
-  loop_->queueInLoop(std::bind(&TcpConnection::connectionDestroyed, conn));
+  //打印日志
+
+  //在自己的IOloop中进行
+  EventLoop* ioloop = conn->getLoop();
+  ioloop->queueInLoop(std::bind(&TcpConnection::connectionDestroyed, conn));
 }

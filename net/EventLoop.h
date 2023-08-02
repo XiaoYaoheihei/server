@@ -11,6 +11,7 @@ class Channel;
 class Poller;
 class Timer;
 class TimerQueue;
+class Epoll;
 
 class EventLoop{
   public:
@@ -47,7 +48,8 @@ class EventLoop{
     bool eventHanding;
     bool callingPendingFunctors;
     //这里的Poller还待改进
-    std::unique_ptr<Poller> poller_;
+    // std::unique_ptr<Poller> poller_;
+    std::unique_ptr<Epoll> poller_;
     
     int wakeupFd;
     std::unique_ptr<Channel> wakeupChannel;

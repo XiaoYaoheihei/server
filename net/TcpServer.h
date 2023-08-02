@@ -4,12 +4,14 @@
 #include "EventLoop.h"
 #include "TcpConnection.h"
 
+class EventLoopThreadPool;
 class Acceptor;
 class TcpServer {
   public:
     TcpServer(EventLoop* loop, const sockaddr_in& addr, const std::string& name, bool reuseport);
     ~TcpServer();
-
+    //设置线程数
+    void setThreadNum(int numThread);
     void start();
 
     void setConnectionCallback(const ConnectionCallback& cb);
@@ -19,7 +21,8 @@ class TcpServer {
   private :
     void newConnection(int sockfd, const struct sockaddr_in& peeraddr);
     void removeConnection(const TcpConnectionptr& conn);
-
+    void removeConnectionInloop(const TcpConnectionptr& conn);
+    
     typedef std::map<std::string, TcpConnectionptr> ConnectionMap;
     EventLoop* loop_;
     const std::string name_;
@@ -31,6 +34,8 @@ class TcpServer {
     MessageCallback messagecallback_;
     ConnectionMap connections_;
     int nextConnId_;
+
+    std::shared_ptr<EventLoopThreadPool> poll_;
 };
 
 

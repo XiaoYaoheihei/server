@@ -76,11 +76,11 @@ int socketopts::acceptConn(int lfd,const struct sockaddr_in *listenAddr) {
     }
   }
   //添加日志信息
-  printf("success to accept\n");
+  printf("success to accept\n cfd == %d\n", cfd);
   return cfd;
 }
 
 void socketopts::close(int socketfd) {
-  close(socketfd);
+  ::close(socketfd);
   printf("close the fd");
 }

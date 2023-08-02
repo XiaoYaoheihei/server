@@ -2,6 +2,7 @@
 #include "../net/Channel.h"
 #include "../base/Timestamp.h"
 #include <poll.h>
+#include <unistd.h>
 #include <iostream>
 
 Poller::Poller(EventLoop* loop) 
@@ -35,6 +36,8 @@ void Poller::fillactiveChannels(int numEvents, ChannelList* activeChannels) {
       auto ch = ChannelMap.find(event.fd);
       Channel* channel = ch->second;
       std::cout << "此时的fd:" << event.fd << std::endl;
+      std::cout << "设置的事件：" << event.revents << std::endl;
+      // sleep(1);
       channel->setRevent(event.revents);
       activeChannels->push_back(channel);
       --numEvents;

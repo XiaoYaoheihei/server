@@ -33,6 +33,7 @@ class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
     void send(Buffer* message);
     //线程安全的
     void shutdown();
+    // void setTcpNoDelay(bool on);//Tcp选项
 
   private:
     enum StateE {

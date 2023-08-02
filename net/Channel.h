@@ -22,7 +22,7 @@ class Channel{
     void setClose(const EventCallback& cb);
     
     void setRevent(short event);
-    int getIndex(); 
+    // int getIndex(); 
     void setIndex(int number); 
     int getFd(); 
     int getEvent(); 

@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 #include <algorithm>
+#include <signal.h>
 
 #include "../net/EventLoop.h"
-#include "../net/poller.h"
+// #include "../net/poller.h"
+#include "../net/Epoll.h"
 #include "../net/Channel.h"
 #include "../net/TimerQueue.h"
 #include "../base/Timestamp.h"
@@ -21,6 +23,15 @@ int createEventfd() {
   return evtfd;
 }
 
+class IgnoreSigpipe {
+  public:
+    IgnoreSigpipe() {
+      ::signal(SIGPIPE, SIG_IGN);
+    }
+};
+
+IgnoreSigpipe initObj;
+
 EventLoop::EventLoop()
   : looping(false),
     quit_(false),
@@ -28,7 +39,7 @@ EventLoop::EventLoop()
     threadId(syscall(SYS_gettid)),
     eventHanding(false),
     callingPendingFunctors(false),
-    poller_(std::make_unique<Poller>(this)),
+    poller_(std::make_unique<Epoll>(this)),
     wakeupFd(createEventfd()),
     wakeupChannel(std::make_unique<Channel>(this, wakeupFd)),
     timerQueue_(std::make_unique<TimerQueue>(this)) {
@@ -38,7 +49,9 @@ EventLoop::EventLoop()
 }
 
 EventLoop::~EventLoop() {
-
+  wakeupChannel->disableAll();
+  wakeupChannel->remove();
+  close(wakeupFd);
 }
 
 //事件循环检测
